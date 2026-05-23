@@ -71,8 +71,9 @@ export const Inquiries: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
 
-  const fetchInquiries = async (background = false) => {
-    if (!background) setLoading(true);
+  const fetchInquiries = async (background: any = false) => {
+    const isBackground = background === true;
+    if (!isBackground) setLoading(true);
     try {
       const params: any = { page };
       if (search) params.search = search;
@@ -94,7 +95,7 @@ export const Inquiries: React.FC = () => {
       console.error('Error fetching inquiries:', err);
       toast.error('Failed to load inquiries.');
     } finally {
-      if (!background) setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
