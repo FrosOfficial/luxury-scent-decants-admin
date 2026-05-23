@@ -23,10 +23,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const normalizeLongevity = (val: string): string => {
   const v = (val || '').toLowerCase();
-  if (v.includes('4-8') || v.includes('4') || v.includes('5') || v.includes('6') || v.includes('7') || v.includes('8') || v.includes('short') || v.includes('moderate')) return '4-8hrs';
-  if (v.includes('8-12') || v.includes('9') || v.includes('10') || v.includes('11') || v.includes('12') || v.includes('long')) return '8-12hrs';
-  if (v.includes('12+') || v.includes('very') || v.includes('24') || v.includes('enormous')) return '12+ hrs';
-  return '4-8hrs';
+  if (v.includes('4')) return '4hrs';
+  if (v.includes('5')) return '5hrs';
+  if (v.includes('6')) return '6hrs';
+  if (v.includes('7')) return '7hrs';
+  if (v.includes('8') || v.includes('9') || v.includes('long') || v.includes('very')) return '8hrs';
+  return '6hrs';
 };
 
 const normalizeSillage = (val: string): string => {
@@ -200,7 +202,7 @@ export const Catalog: React.FC = () => {
       demographic: 'Unisex',
       concentration: 'EDP',
       image_url: '',
-      performance_longevity: '4-8hrs',
+      performance_longevity: '6hrs',
       performance_sillage: 'Moderate',
       usage_day: true,
       usage_night: true,
@@ -823,9 +825,11 @@ export const Catalog: React.FC = () => {
                           onChange={(e) => setFormData(prev => ({ ...prev, performance_longevity: e.target.value }))}
                           className="w-full px-3 py-2 bg-black/40 border border-brand-gold/20 rounded-sm text-brand-cream text-xs focus:outline-none"
                         >
-                          <option value="4-8hrs">4-8hrs</option>
-                          <option value="8-12hrs">8-12hrs</option>
-                          <option value="12+ hrs">12+ hrs</option>
+                          <option value="4hrs">4hrs</option>
+                          <option value="5hrs">5hrs</option>
+                          <option value="6hrs">6hrs</option>
+                          <option value="7hrs">7hrs</option>
+                          <option value="8hrs">8hrs</option>
                         </select>
                       </div>
                       <div>
