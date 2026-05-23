@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { 
   Search, 
   Plus, 
@@ -19,6 +20,22 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const normalizeLongevity = (val: string): string => {
+  const v = (val || '').toLowerCase();
+  if (v.includes('4-8') || v.includes('4') || v.includes('5') || v.includes('6') || v.includes('7') || v.includes('8') || v.includes('short') || v.includes('moderate')) return '4-8hrs';
+  if (v.includes('8-12') || v.includes('9') || v.includes('10') || v.includes('11') || v.includes('12') || v.includes('long')) return '8-12hrs';
+  if (v.includes('12+') || v.includes('very') || v.includes('24') || v.includes('enormous')) return '12+ hrs';
+  return '4-8hrs';
+};
+
+const normalizeSillage = (val: string): string => {
+  const v = (val || '').toLowerCase();
+  if (v.includes('moderate')) return 'Moderate';
+  if (v.includes('strong')) return 'Strong';
+  if (v.includes('enormous')) return 'Enormous';
+  return 'Moderate';
+};
 
 interface VolumePricing {
   id: string;
@@ -70,6 +87,7 @@ interface PaginationMeta {
 
 export const Catalog: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [brandFilter, setBrandFilter] = useState('');
@@ -182,7 +200,7 @@ export const Catalog: React.FC = () => {
       demographic: 'Unisex',
       concentration: 'EDP',
       image_url: '',
-      performance_longevity: 'Long Lasting',
+      performance_longevity: '4-8hrs',
       performance_sillage: 'Moderate',
       usage_day: true,
       usage_night: true,
@@ -207,8 +225,8 @@ export const Catalog: React.FC = () => {
       demographic: product.demographic,
       concentration: product.concentration,
       image_url: product.image_url || '',
-      performance_longevity: product.performance.longevity,
-      performance_sillage: product.performance.sillage,
+      performance_longevity: normalizeLongevity(product.performance.longevity),
+      performance_sillage: normalizeSillage(product.performance.sillage),
       usage_day: product.usage.day,
       usage_night: product.usage.night,
       season_spring: product.usage.seasons.spring,
@@ -275,6 +293,43 @@ export const Catalog: React.FC = () => {
       } else {
         toast.error(err.response?.data?.message || 'Error occurred while saving product.');
       }
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const uniqueFileName = `product-images/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+
+      const { error } = await supabase.storage
+        .from('products')
+        .upload(uniqueFileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('products')
+        .getPublicUrl(uniqueFileName);
+
+      const publicUrl = urlData.publicUrl;
+
+      setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success('Product image uploaded successfully!');
+    } catch (err: any) {
+      console.error('Error uploading product image:', err);
+      toast.error(err.message || 'Failed to upload product image to cloud storage.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -690,8 +745,8 @@ export const Catalog: React.FC = () => {
                       className="w-full px-4 py-2.5 bg-black/40 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-sm"
                     >
                       <option value="Unisex">Unisex</option>
-                      <option value="Masculine">Masculine</option>
-                      <option value="Feminine">Feminine</option>
+                      <option value="Masculine">Masculine (Men)</option>
+                      <option value="Feminine">Feminine (Women)</option>
                     </select>
                   </div>
 
@@ -725,16 +780,62 @@ export const Catalog: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Image URL */}
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-brand-gold uppercase tracking-wider mb-2">Bottle Image URL (Unsplash or CDN)</label>
-                    <input
-                      type="url"
-                      placeholder="e.g. https://images.unsplash.com/photo-..."
-                      value={formData.image_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                      className="w-full px-4 py-2.5 bg-black/40 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream placeholder-brand-cream/20 focus:outline-none text-sm"
-                    />
+                  {/* Bottle Image (File Upload from Computer) */}
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="block text-xs font-semibold text-brand-gold uppercase tracking-wider">Bottle Image</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
+                      <div className="sm:col-span-1 h-24 rounded-lg border border-brand-gold/20 bg-black/40 flex items-center justify-center overflow-hidden relative shadow-inner">
+                        {formData.image_url ? (
+                          <img 
+                            src={formData.image_url} 
+                            alt="Uploaded preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-[10px] text-brand-cream/30 text-center p-2 uppercase tracking-wider">No Image</div>
+                        )}
+                        {uploading && (
+                          <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-brand-gold border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <label className={`w-full flex flex-col items-center justify-center px-4 py-5 border border-dashed rounded-lg cursor-pointer transition duration-200 text-center ${
+                          uploading 
+                            ? 'border-brand-gold/15 bg-white/[0.01] pointer-events-none' 
+                            : 'border-brand-gold/30 bg-black/40 hover:border-brand-gold/60 hover:bg-black/60'
+                        }`}>
+                          <div className="flex flex-col items-center justify-center pt-1.5 pb-2 text-brand-cream/70">
+                            <svg className="w-7 h-7 mb-2 text-brand-gold/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p className="mb-1 text-xs font-semibold tracking-wide uppercase text-brand-cream">
+                              {uploading ? 'Uploading Image...' : 'Click to Upload Image'}
+                            </p>
+                            <p className="text-[10px] text-brand-cream/40">PNG, JPG, WEBP, or GIF up to 5MB</p>
+                          </div>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleFileUpload} 
+                            disabled={uploading}
+                          />
+                        </label>
+                        
+                        <div className="mt-2">
+                          <input
+                            type="text"
+                            placeholder="Or paste direct image URL instead..."
+                            value={formData.image_url}
+                            onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                            className="w-full px-3 py-1.5 bg-black/30 border border-brand-gold/10 hover:border-brand-gold/25 focus:border-brand-gold rounded-sm text-brand-cream/80 placeholder-brand-cream/15 focus:outline-none text-[11px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Performance Specs */}
@@ -744,24 +845,30 @@ export const Catalog: React.FC = () => {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[11px] font-semibold text-brand-cream/60 mb-2">Longevity rating (e.g. 8-10 Hours)</label>
-                        <input
-                          type="text"
+                        <label className="block text-[11px] font-semibold text-brand-cream/60 mb-2">Longevity rating</label>
+                        <select
                           required
                           value={formData.performance_longevity}
                           onChange={(e) => setFormData(prev => ({ ...prev, performance_longevity: e.target.value }))}
                           className="w-full px-3 py-2 bg-black/40 border border-brand-gold/20 rounded-sm text-brand-cream text-xs focus:outline-none"
-                        />
+                        >
+                          <option value="4-8hrs">4-8hrs</option>
+                          <option value="8-12hrs">8-12hrs</option>
+                          <option value="12+ hrs">12+ hrs</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-brand-cream/60 mb-2">Sillage rating (e.g. Strong projection)</label>
-                        <input
-                          type="text"
+                        <label className="block text-[11px] font-semibold text-brand-cream/60 mb-2">Sillage rating</label>
+                        <select
                           required
                           value={formData.performance_sillage}
                           onChange={(e) => setFormData(prev => ({ ...prev, performance_sillage: e.target.value }))}
                           className="w-full px-3 py-2 bg-black/40 border border-brand-gold/20 rounded-sm text-brand-cream text-xs focus:outline-none"
-                        />
+                        >
+                          <option value="Moderate">Moderate</option>
+                          <option value="Strong">Strong</option>
+                          <option value="Enormous">Enormous</option>
+                        </select>
                       </div>
                     </div>
                   </div>
