@@ -750,35 +750,6 @@ export const Catalog: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Occasion */}
-                  <div>
-                    <label className="block text-xs font-semibold text-brand-gold uppercase tracking-wider mb-2">Suggested Occasion</label>
-                    <select
-                      value={formData.occasion}
-                      onChange={(e) => setFormData(prev => ({ ...prev, occasion: e.target.value as Product['occasion'] }))}
-                      className="w-full px-4 py-2.5 bg-black/40 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-sm"
-                    >
-                      <option value="Everyday">Everyday Wear</option>
-                      <option value="Summer Fresh">Summer Fresh</option>
-                      <option value="Winter Warmth">Winter Warmth</option>
-                      <option value="Date Night">Date Night</option>
-                      <option value="Corporate Office">Corporate Office</option>
-                    </select>
-                  </div>
-
-                  {/* Concentration */}
-                  <div>
-                    <label className="block text-xs font-semibold text-brand-gold uppercase tracking-wider mb-2">Concentration</label>
-                    <select
-                      value={formData.concentration}
-                      onChange={(e) => setFormData(prev => ({ ...prev, concentration: e.target.value as Product['concentration'] }))}
-                      className="w-full px-4 py-2.5 bg-black/40 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-sm"
-                    >
-                      <option value="EDP">EDP (Eau de Parfum)</option>
-                      <option value="EDT">EDT (Eau de Toilette)</option>
-                      <option value="Extrait de Parfum">Extrait de Parfum</option>
-                    </select>
-                  </div>
 
                   {/* Bottle Image (File Upload from Computer) */}
                   <div className="md:col-span-2 space-y-2">
