@@ -63,8 +63,12 @@ export const Login: React.FC = () => {
       >
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3.5 bg-gradient-to-br from-brand-emerald-light/20 to-brand-emerald-dark border border-brand-gold/30 rounded-xl mb-4 shadow-lg shadow-black/40">
-            <Sparkles className="w-8 h-8 text-brand-gold" />
+          <div className="w-16 h-16 rounded-full overflow-hidden border border-brand-gold/30 shadow-lg shadow-black/40 mb-4 select-none bg-brand-emerald-dark shrink-0 inline-flex items-center justify-center">
+            <img 
+              src="/logo.webp" 
+              alt="Luxury Scent Decants Logo" 
+              className="w-full h-full object-cover" 
+            />
           </div>
           <h1 className="font-serif text-3xl font-bold tracking-wide text-brand-cream select-none">
             LUXURY SCENT

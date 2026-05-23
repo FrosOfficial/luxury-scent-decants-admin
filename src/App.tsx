@@ -75,8 +75,12 @@ const AppContent: React.FC = () => {
 
         {/* Brand Header */}
         <div className="p-6 border-b border-white/[0.06] flex flex-col items-center">
-          <div className="inline-flex items-center justify-center p-2.5 bg-gradient-to-br from-brand-emerald-light/20 to-brand-emerald-dark border border-brand-gold/30 rounded-xl mb-3 shadow-lg shadow-black/40 select-none">
-            <Sparkles className="w-6 h-6 text-brand-gold" />
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-brand-gold/30 shadow-lg shadow-black/40 mb-3 select-none bg-brand-emerald-dark shrink-0 flex items-center justify-center">
+            <img 
+              src="/logo.webp" 
+              alt="Luxury Scent Decants Logo" 
+              className="w-full h-full object-cover" 
+            />
           </div>
           <h2 className="font-serif text-xl font-bold tracking-wider text-brand-cream text-center select-none">
             LUXURY SCENT
