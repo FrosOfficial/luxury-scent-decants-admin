@@ -71,8 +71,8 @@ export const Inquiries: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
 
-  const fetchInquiries = async () => {
-    setLoading(true);
+  const fetchInquiries = async (background = false) => {
+    if (!background) setLoading(true);
     try {
       const params: any = { page };
       if (search) params.search = search;
@@ -94,12 +94,19 @@ export const Inquiries: React.FC = () => {
       console.error('Error fetching inquiries:', err);
       toast.error('Failed to load inquiries.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchInquiries();
+
+    // Silent background auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchInquiries(true);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [page, status, startDate, endDate]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

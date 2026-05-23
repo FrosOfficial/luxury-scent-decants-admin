@@ -52,8 +52,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = async () => {
-    setLoading(true);
+  const fetchStats = async (background = false) => {
+    if (!background) setLoading(true);
     try {
       const response = await api.get('/admin/stats');
       setStats(response.data);
@@ -61,12 +61,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       console.error('Error fetching dashboard statistics:', err);
       toast.error('Failed to load dashboard metrics.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchStats();
+
+    // Silent background auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchStats(true);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const formatCurrency = (value: number) => {

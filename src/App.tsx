@@ -240,6 +240,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Toaster position="top-right" toastOptions={{
+        duration: 2000,
         className: 'font-sans font-medium text-sm',
         style: {
           background: '#021c13',
