@@ -35,6 +35,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [localUser, setLocalUser] = useState<LocalUser | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const verifyingRef = React.useRef(false);
+  const checkedRef = React.useRef(false);
 
   const checkAdminRole = async (): Promise<boolean> => {
     try {
@@ -61,40 +64,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // 1. Initial Session Check
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setSupabaseUser(session.user);
-          // Verify role from API
-          await checkAdminRole();
-        }
-      } catch (err) {
-        console.error('Error initializing admin auth:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    let isMounted = true;
 
-    initAuth();
+    const handleAuth = async (session: any) => {
+      if (!isMounted) return;
 
-    // 2. Auth State Changed Listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setLoading(true);
       if (session?.user) {
         setSupabaseUser(session.user);
-        if (event === 'SIGNED_IN') {
-          await checkAdminRole();
+        
+        // Prevent duplicate concurrent /me checks
+        if (!checkedRef.current && !verifyingRef.current) {
+          verifyingRef.current = true;
+          setLoading(true);
+          const success = await checkAdminRole();
+          if (isMounted) {
+            verifyingRef.current = false;
+            if (success) {
+              checkedRef.current = true;
+            }
+            setLoading(false);
+          }
+        } else if (checkedRef.current) {
+          setLoading(false);
         }
       } else {
         setSupabaseUser(null);
         setLocalUser(null);
+        checkedRef.current = false;
+        verifyingRef.current = false;
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
+    };
+
+    // 1. Initial check on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuth(session);
+    });
+
+    // 2. Auth listener for subsequent changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        handleAuth(session);
+      }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
