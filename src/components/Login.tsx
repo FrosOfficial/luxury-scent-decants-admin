@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
                   id="email"
                   type="email"
                   required
-                  placeholder="admin@luxuryscentdecants.com"
+                  placeholder="Input privileges email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-black/40 border border-brand-gold/20 rounded-sm text-brand-cream placeholder-brand-cream/30 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition duration-200 text-sm font-sans"
@@ -120,7 +120,7 @@ export const Login: React.FC = () => {
                   id="password"
                   type="password"
                   required
-                  placeholder="••••••••••••"
+                  placeholder="Input privileges password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-black/40 border border-brand-gold/20 rounded-sm text-brand-cream placeholder-brand-cream/30 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition duration-200 text-sm font-sans"
@@ -152,10 +152,6 @@ export const Login: React.FC = () => {
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-brand-cream/40 text-[11px] uppercase tracking-widest select-none">
-          Secured with Supabase Cryptography & JWT Keys
-        </div>
       </motion.div>
     </div>
   );
