@@ -397,7 +397,10 @@ export const Catalog: React.FC = () => {
 
       // Delete previously uploaded temporary image during this session if they upload a new one
       if (newUploadedFilePath) {
-        await supabase.storage.from('products').remove([newUploadedFilePath]);
+        const { error: deleteError } = await supabase.storage.from('products').remove([newUploadedFilePath]);
+        if (deleteError) {
+          console.error('Error deleting replaced image:', deleteError);
+        }
       }
 
       setNewUploadedFilePath(uniqueFileName);
@@ -420,10 +423,10 @@ export const Catalog: React.FC = () => {
 
   const handleCloseProductModal = async () => {
     if (newUploadedFilePath) {
-      try {
-        await supabase.storage.from('products').remove([newUploadedFilePath]);
-      } catch (err) {
-        console.error('Error deleting orphaned image:', err);
+      const { error } = await supabase.storage.from('products').remove([newUploadedFilePath]);
+      if (error) {
+        console.error('Error deleting orphaned image on close:', error);
+        toast.error(`Clean up warning: ${error.message || 'Failed to delete temporary upload'}`);
       }
       setNewUploadedFilePath(null);
     }
