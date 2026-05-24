@@ -118,6 +118,7 @@ export const Catalog: React.FC = () => {
   // Modal States
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [newUploadedFilePath, setNewUploadedFilePath] = useState<string | null>(null);
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [pricingProduct, setPricingProduct] = useState<Product | null>(null);
 
@@ -211,6 +212,7 @@ export const Catalog: React.FC = () => {
 
   const openCreateModal = () => {
     setEditingProduct(null);
+    setNewUploadedFilePath(null);
     setFormData({
       name: '',
       brand: '',
@@ -235,6 +237,7 @@ export const Catalog: React.FC = () => {
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
+    setNewUploadedFilePath(null);
     const loadedAccords = product.accords ? product.accords.map(a => ({ name: a.name, percentage: a.percentage })) : [];
     const scentProfile = loadedAccords.length > 0 ? (loadedAccords[0].name as ScentProfile) : product.scent_profile;
     setFormData({
@@ -353,6 +356,7 @@ export const Catalog: React.FC = () => {
         await api.post('/admin/products', payload);
         toast.success('Product cataloged successfully.');
       }
+      setNewUploadedFilePath(null);
       setIsProductModalOpen(false);
       fetchProducts();
       fetchBrands();
@@ -391,6 +395,13 @@ export const Catalog: React.FC = () => {
         throw error;
       }
 
+      // Delete previously uploaded temporary image during this session if they upload a new one
+      if (newUploadedFilePath) {
+        await supabase.storage.from('products').remove([newUploadedFilePath]);
+      }
+
+      setNewUploadedFilePath(uniqueFileName);
+
       const { data: urlData } = supabase.storage
         .from('products')
         .getPublicUrl(uniqueFileName);
@@ -405,6 +416,18 @@ export const Catalog: React.FC = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleCloseProductModal = async () => {
+    if (newUploadedFilePath) {
+      try {
+        await supabase.storage.from('products').remove([newUploadedFilePath]);
+      } catch (err) {
+        console.error('Error deleting orphaned image:', err);
+      }
+      setNewUploadedFilePath(null);
+    }
+    setIsProductModalOpen(false);
   };
 
   // Size and pricing handlers
@@ -754,7 +777,7 @@ export const Catalog: React.FC = () => {
               <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent"></div>
 
               <button 
-                onClick={() => setIsProductModalOpen(false)}
+                onClick={handleCloseProductModal}
                 className="absolute top-6 right-6 p-2 text-brand-cream/60 hover:text-brand-gold transition cursor-pointer"
               >
                 <X className="w-6 h-6" />
@@ -1125,7 +1148,7 @@ export const Catalog: React.FC = () => {
                 <div className="flex justify-end gap-3 border-t border-white/[0.08] pt-6 mt-6">
                   <button
                     type="button"
-                    onClick={() => setIsProductModalOpen(false)}
+                    onClick={handleCloseProductModal}
                     className="py-2.5 px-5 bg-white/[0.03] border border-white/[0.08] hover:border-brand-gold/40 text-brand-gold text-xs font-semibold uppercase tracking-wider rounded-sm transition cursor-pointer"
                   >
                     Cancel
