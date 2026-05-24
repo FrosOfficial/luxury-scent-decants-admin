@@ -235,10 +235,12 @@ export const Catalog: React.FC = () => {
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
+    const loadedAccords = product.accords ? product.accords.map(a => ({ name: a.name, percentage: a.percentage })) : [];
+    const scentProfile = loadedAccords.length > 0 ? (loadedAccords[0].name as ScentProfile) : product.scent_profile;
     setFormData({
       name: product.name,
       brand: product.brand,
-      scent_profile: product.scent_profile,
+      scent_profile: scentProfile,
       demographic: product.demographic,
       image_url: product.image_url || '',
       performance_longevity: normalizeLongevity(product.performance.longevity),
@@ -252,7 +254,7 @@ export const Catalog: React.FC = () => {
       rating: product.rating,
       rating_count: product.rating_count,
       is_active: product.is_active,
-      accords: product.accords ? product.accords.map(a => ({ name: a.name, percentage: a.percentage })) : [],
+      accords: loadedAccords,
     });
     setIsProductModalOpen(true);
   };
