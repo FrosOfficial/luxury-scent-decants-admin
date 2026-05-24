@@ -49,11 +49,20 @@ interface VolumePricing {
   updated_at: string;
 }
 
+type ScentProfile = 
+  | 'Aldehydic' | 'Amber' | 'Animalic' | 'Aquatic' | 'Aromatic' | 'Balsamic' 
+  | 'Cinnamon' | 'Citrus' | 'Coconut' | 'Coffee' | 'Earthy' | 'Floral' 
+  | 'Fresh' | 'Fresh Spicy' | 'Fruity' | 'Gourmand' | 'Green' | 'Iris' | 'Lactonic' 
+  | 'Lavender' | 'Leather' | 'Marine' | 'Metallic' | 'Mossy' | 'Musky' 
+  | 'Oud' | 'Ozonic' | 'Patchouli' | 'Powdery' | 'Rose' | 'Savory' 
+  | 'Smoky' | 'Soft Spicy' | 'Spicy' | 'Sweet' | 'Tobacco' | 'Tropical' | 'Vanilla' 
+  | 'Violet' | 'Warm Spicy' | 'White Floral' | 'Woody' | 'Yellow Floral';
+
 interface Product {
   id: string;
   name: string;
   brand: string;
-  scent_profile: 'Woody' | 'Floral' | 'Citrus' | 'Aquatic' | 'Spicy' | 'Gourmand';
+  scent_profile: ScentProfile;
   demographic: 'Masculine' | 'Feminine' | 'Unisex';
   image_url: string | null;
   performance: {
@@ -74,6 +83,7 @@ interface Product {
   rating_count: number;
   is_active: boolean;
   volumes: VolumePricing[];
+  accords?: { id?: string; name: string; percentage: number }[];
 }
 
 interface PaginationMeta {
@@ -84,6 +94,16 @@ interface PaginationMeta {
   from: number;
   to: number;
 }
+
+const ALL_ACCORDS: ScentProfile[] = [
+  'Aldehydic', 'Amber', 'Animalic', 'Aquatic', 'Aromatic', 'Balsamic', 
+  'Cinnamon', 'Citrus', 'Coconut', 'Coffee', 'Earthy', 'Floral', 
+  'Fresh', 'Fresh Spicy', 'Fruity', 'Gourmand', 'Green', 'Iris', 'Lactonic', 
+  'Lavender', 'Leather', 'Marine', 'Metallic', 'Mossy', 'Musky', 
+  'Oud', 'Ozonic', 'Patchouli', 'Powdery', 'Rose', 'Savory', 
+  'Smoky', 'Soft Spicy', 'Spicy', 'Sweet', 'Tobacco', 'Tropical', 'Vanilla', 
+  'Violet', 'Warm Spicy', 'White Floral', 'Woody', 'Yellow Floral'
+];
 
 export const Catalog: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -108,7 +128,7 @@ export const Catalog: React.FC = () => {
     scent_profile: 'Woody' as Product['scent_profile'],
     demographic: 'Unisex' as Product['demographic'],
     image_url: '',
-    performance_longevity: 'Long Lasting',
+    performance_longevity: '6hrs',
     performance_sillage: 'Moderate',
     usage_day: true,
     usage_night: true,
@@ -119,6 +139,7 @@ export const Catalog: React.FC = () => {
     rating: 4.5,
     rating_count: 10,
     is_active: true,
+    accords: [] as { name: string; percentage: number }[],
   });
 
   // Pricing Form State
@@ -207,6 +228,7 @@ export const Catalog: React.FC = () => {
       rating: 4.5,
       rating_count: 10,
       is_active: true,
+      accords: [],
     });
     setIsProductModalOpen(true);
   };
@@ -230,8 +252,65 @@ export const Catalog: React.FC = () => {
       rating: product.rating,
       rating_count: product.rating_count,
       is_active: product.is_active,
+      accords: product.accords ? product.accords.map(a => ({ name: a.name, percentage: a.percentage })) : [],
     });
     setIsProductModalOpen(true);
+  };
+
+  const handleAccordChange = (index: number, field: 'name' | 'percentage', value: any) => {
+    setFormData(prev => {
+      const newAccords = [...prev.accords];
+      newAccords[index] = { ...newAccords[index], [field]: value };
+      
+      // Auto-update scent_profile if index 0 is changed
+      let scent_profile = prev.scent_profile;
+      if (index === 0 && field === 'name') {
+        scent_profile = value as Product['scent_profile'];
+      }
+      
+      return {
+        ...prev,
+        accords: newAccords,
+        scent_profile
+      };
+    });
+  };
+
+  const addAccordRow = () => {
+    if (formData.accords.length >= 5) return;
+    setFormData(prev => {
+      const newAccords = [...prev.accords, { name: 'Woody', percentage: 50 }];
+      
+      // Auto-update scent_profile to the first accord's name if this is the first accord added
+      let scent_profile = prev.scent_profile;
+      if (newAccords.length === 1) {
+        scent_profile = 'Woody';
+      }
+      
+      return {
+        ...prev,
+        accords: newAccords,
+        scent_profile
+      };
+    });
+  };
+
+  const removeAccordRow = (index: number) => {
+    setFormData(prev => {
+      const newAccords = prev.accords.filter((_, i) => i !== index);
+      
+      // Auto-update scent_profile to the new first accord's name if index 0 was removed/changed
+      let scent_profile = prev.scent_profile;
+      if (newAccords.length > 0) {
+        scent_profile = newAccords[0].name as Product['scent_profile'];
+      }
+      
+      return {
+        ...prev,
+        accords: newAccords,
+        scent_profile
+      };
+    });
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -261,6 +340,7 @@ export const Catalog: React.FC = () => {
       rating: Number(formData.rating),
       rating_count: Number(formData.rating_count),
       is_active: formData.is_active,
+      accords: formData.accords,
     };
 
     try {
@@ -713,19 +793,24 @@ export const Catalog: React.FC = () => {
 
                   {/* Scent Profile */}
                   <div>
-                    <label className="block text-xs font-semibold text-brand-gold uppercase tracking-wider mb-2">Scent Profile</label>
+                    <label className="block text-xs font-semibold text-brand-gold uppercase tracking-wider mb-2">
+                      Scent Profile
+                    </label>
                     <select
                       value={formData.scent_profile}
                       onChange={(e) => setFormData(prev => ({ ...prev, scent_profile: e.target.value as Product['scent_profile'] }))}
-                      className="w-full px-4 py-2.5 bg-black/40 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-sm"
+                      disabled={formData.accords.length > 0}
+                      className="w-full px-4 py-2.5 bg-black/40 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <option value="Woody">Woody</option>
-                      <option value="Floral">Floral</option>
-                      <option value="Citrus">Citrus</option>
-                      <option value="Aquatic">Aquatic</option>
-                      <option value="Spicy">Spicy</option>
-                      <option value="Gourmand">Gourmand</option>
+                      {ALL_ACCORDS.map(profile => (
+                        <option key={profile} value={profile}>{profile}</option>
+                      ))}
                     </select>
+                    {formData.accords.length > 0 && (
+                      <p className="text-[10px] text-brand-gold/60 mt-1 italic">
+                        * Synced to Accord #1 (Primary) below.
+                      </p>
+                    )}
                   </div>
 
                   {/* Demographic */}
@@ -740,6 +825,90 @@ export const Catalog: React.FC = () => {
                       <option value="Masculine">Masculine (Men)</option>
                       <option value="Feminine">Feminine (Women)</option>
                     </select>
+                  </div>
+
+                  {/* Main Accords & Progression Tiers */}
+                  <div className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-xl space-y-4 md:col-span-2">
+                    <div className="flex items-center justify-between border-b border-white/[0.04] pb-2">
+                      <h4 className="text-xs font-semibold text-brand-gold uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" /> Main Accords & Progression Tiers
+                      </h4>
+                      <span className="text-[10px] text-brand-cream/40 uppercase tracking-widest font-mono">
+                        {formData.accords.length} / 5 Accords
+                      </span>
+                    </div>
+
+                    {formData.accords.length === 0 ? (
+                      <div className="py-6 text-center text-brand-cream/35 italic text-xs bg-black/20 border border-dashed border-brand-gold/15 rounded-sm">
+                        No main accords configured. The storefront will only display the primary Scent Profile.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {formData.accords.map((accord, idx) => (
+                          <div 
+                            key={idx} 
+                            className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-black/40 border border-brand-gold/10 rounded-sm"
+                          >
+                            <div className="flex items-center gap-2 sm:w-1/3">
+                              <span className="font-mono text-xs font-semibold text-brand-gold w-6">#{idx + 1}</span>
+                              <span className="text-[10px] text-brand-cream/50 uppercase tracking-wider">
+                                {idx === 0 ? 'Primary Accord' : `Accord #${idx + 1}`}
+                              </span>
+                            </div>
+
+                            <div className="flex-1 grid grid-cols-2 gap-3">
+                              {/* Accord Name Select */}
+                              <div>
+                                <select
+                                  value={accord.name}
+                                  onChange={(e) => handleAccordChange(idx, 'name', e.target.value)}
+                                  className="w-full px-2 py-1.5 bg-black/50 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-xs"
+                                >
+                                  {ALL_ACCORDS.map(profile => (
+                                    <option key={profile} value={profile}>{profile}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Accord Percentage Input */}
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="99"
+                                  required
+                                  value={accord.percentage}
+                                  onChange={(e) => handleAccordChange(idx, 'percentage', Number(e.target.value))}
+                                  className="w-full pl-3 pr-6 py-1.5 bg-black/50 border border-brand-gold/20 focus:border-brand-gold rounded-sm text-brand-cream focus:outline-none text-xs text-right"
+                                  placeholder="%"
+                                />
+                                <span className="absolute inset-y-0 right-2.5 flex items-center text-brand-cream/40 text-xs font-semibold select-none">%</span>
+                              </div>
+                            </div>
+
+                            {/* Remove button */}
+                            <button
+                              type="button"
+                              onClick={() => removeAccordRow(idx)}
+                              className="p-1.5 self-end sm:self-auto bg-white/[0.02] border border-white/[0.08] hover:border-red-500/30 text-brand-cream/55 hover:text-red-500 rounded-sm transition cursor-pointer flex items-center justify-center"
+                              title="Remove Accord"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {formData.accords.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={addAccordRow}
+                        className="w-full py-2 bg-white/[0.02] border border-dashed border-brand-gold/25 hover:border-brand-gold/50 text-brand-gold font-semibold text-xs tracking-wider uppercase rounded-sm hover:bg-brand-gold/5 transition cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Accord Row
+                      </button>
+                    )}
                   </div>
 
 
