@@ -54,9 +54,7 @@ interface Product {
   name: string;
   brand: string;
   scent_profile: 'Woody' | 'Floral' | 'Citrus' | 'Aquatic' | 'Spicy' | 'Gourmand';
-  occasion: 'Summer Fresh' | 'Winter Warmth' | 'Date Night' | 'Corporate Office' | 'Everyday';
   demographic: 'Masculine' | 'Feminine' | 'Unisex';
-  concentration: 'EDT' | 'EDP' | 'Extrait de Parfum';
   image_url: string | null;
   performance: {
     longevity: string;
@@ -108,9 +106,7 @@ export const Catalog: React.FC = () => {
     name: '',
     brand: '',
     scent_profile: 'Woody' as Product['scent_profile'],
-    occasion: 'Everyday' as Product['occasion'],
     demographic: 'Unisex' as Product['demographic'],
-    concentration: 'EDP' as Product['concentration'],
     image_url: '',
     performance_longevity: 'Long Lasting',
     performance_sillage: 'Moderate',
@@ -198,9 +194,7 @@ export const Catalog: React.FC = () => {
       name: '',
       brand: '',
       scent_profile: 'Woody',
-      occasion: 'Everyday',
       demographic: 'Unisex',
-      concentration: 'EDP',
       image_url: '',
       performance_longevity: '6hrs',
       performance_sillage: 'Moderate',
@@ -223,9 +217,7 @@ export const Catalog: React.FC = () => {
       name: product.name,
       brand: product.brand,
       scent_profile: product.scent_profile,
-      occasion: product.occasion,
       demographic: product.demographic,
-      concentration: product.concentration,
       image_url: product.image_url || '',
       performance_longevity: normalizeLongevity(product.performance.longevity),
       performance_sillage: normalizeSillage(product.performance.sillage),
@@ -250,9 +242,7 @@ export const Catalog: React.FC = () => {
       name: formData.name,
       brand: formData.brand,
       scent_profile: formData.scent_profile,
-      occasion: formData.occasion,
       demographic: formData.demographic,
-      concentration: formData.concentration,
       image_url: formData.image_url || null,
       performance: {
         longevity: formData.performance_longevity,
@@ -567,11 +557,11 @@ export const Catalog: React.FC = () => {
                         </td>
                         <td className="py-4 px-6">
                           <div className="font-semibold text-brand-cream text-base">{product.name}</div>
-                          <div className="text-xs text-brand-cream/50 mt-0.5">{product.brand} • <span className="text-brand-gold">{product.concentration}</span></div>
+                          <div className="text-xs text-brand-cream/50 mt-0.5">{product.brand}</div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="text-brand-cream/80 font-medium">{product.scent_profile}</div>
-                          <div className="text-[10px] text-brand-cream/40 uppercase tracking-wider mt-0.5">{product.demographic} | {product.occasion}</div>
+                          <div className="text-[10px] text-brand-cream/40 uppercase tracking-wider mt-0.5">{product.demographic}</div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex flex-wrap gap-1.5 max-w-[220px]">
