@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Analytics } from '@vercel/analytics/react';
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 import { Inquiries } from './components/Inquiries';
@@ -259,6 +260,7 @@ export default function App() {
         },
       }} />
       <AppContent />
+      <Analytics />
     </AuthProvider>
   );
 }
