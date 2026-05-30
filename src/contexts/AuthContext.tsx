@@ -119,6 +119,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setLoading(true);
     try {
+      try {
+        await api.post('/me/logout');
+      } catch (err) {
+        console.error('Failed to clear admin session on backend:', err);
+      }
       await supabase.auth.signOut();
       setSupabaseUser(null);
       setLocalUser(null);
